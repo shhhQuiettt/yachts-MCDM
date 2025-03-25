@@ -4,7 +4,7 @@ import click
 import numpy as np
 import pandas as pd
 
-from promethee.utils import (
+from utils import (
     load_dataset,
     load_preference_information,
     display_ranking,
@@ -24,7 +24,12 @@ def calculate_marginal_preference_index[T: (float, np.ndarray), U: (float, np.nd
     :param p: preference threshold either as a float if you prefer to calculate for a single parser or as numpy array for multiple parser
     :return: marginal preference index either as a float for single parser and alternative pairs, or as numpy array for multiple alternative/parser
     """
-    raise NotImplementedError()
+    if isinstance(diff, np.ndarray):
+        t = np.where(diff <= q, 0, np.where(diff >= p, 1, (diff - q) / (p - q)))
+        return t
+    else:
+        return 0 if diff <= q else 1 if diff >= p else (diff - q) / (p - q)
+    
 
 
 # TODO
@@ -38,7 +43,19 @@ def calculate_marginal_preference_matrix(
     :param preference_information: preference information
     :return: 3D numpy array with marginal preference matrix on every parser, Consecutive indices [i, j, k] describe first alternative, second alternative, parser
     """
-    raise NotImplementedError()
+    number_of_alternative = dataset.shape[0]
+    number_of_criteria = preference_information.shape[0]
+    
+    marginal_preference_matrix = np.zeros((number_of_alternative, number_of_alternative, number_of_criteria))
+    
+    type_of_preference = preference_information['type']
+    for i in range(number_of_alternative):
+        for j in range(number_of_alternative):
+            diff = np.where(type_of_preference == 'gain', dataset.iloc[i] - dataset.iloc[j], dataset.iloc[j] - dataset.iloc[i])
+
+            marginal_preference_matrix[i, j] = calculate_marginal_preference_index(diff, preference_information.iloc[:, 0], preference_information.iloc[:, 1])
+    
+    return marginal_preference_matrix
 
 
 # TODO
@@ -127,31 +144,53 @@ def promethee(dataset_path: str) -> None:
     dataset_path = Path(dataset_path)
 
     dataset = load_dataset(dataset_path)
+    # print(dataset.head())
     preference_information = load_preference_information(dataset_path)
 
+    # print(preference_information.head())
     marginal_preference_matrix = calculate_marginal_preference_matrix(
         dataset, preference_information
     )
-    comprehensive_preference_matrix = calculate_comprehensive_preference_index(
-        marginal_preference_matrix, preference_information
-    )
+    print(marginal_preference_matrix)
+    # print(marginal_preference_matrix)
+    # print(marginal_preference_matrix)
+    # comprehensive_preference_matrix = calculate_comprehensive_preference_index(
+    #     marginal_preference_matrix, preference_information
+    # )
 
-    positive_flow = calculate_positive_flow(
-        comprehensive_preference_matrix, dataset.index
-    )
-    negative_flow = calculate_negative_flow(
-        comprehensive_preference_matrix, dataset.index
-    )
+    # positive_flow = calculate_positive_flow(
+    #     comprehensive_preference_matrix, dataset.index
+    # )
+    # negative_flow = calculate_negative_flow(
+    #     comprehensive_preference_matrix, dataset.index
+    # )
 
-    assert positive_flow.index.equals(negative_flow.index)
+    # assert positive_flow.index.equals(negative_flow.index)
 
-    partial_ranking = create_partial_ranking(positive_flow, negative_flow)
-    display_ranking(partial_ranking, "Promethee I")
+    # partial_ranking = create_partial_ranking(positive_flow, negative_flow)
+    # display_ranking(partial_ranking, "Promethee I")
 
-    net_flow = calculate_net_flow(positive_flow, negative_flow)
-    complete_ranking = create_complete_ranking(net_flow)
-    display_ranking(complete_ranking, "Promethee II")
+    # net_flow = calculate_net_flow(positive_flow, negative_flow)
+    # complete_ranking = create_complete_ranking(net_flow)
+    # display_ranking(complete_ranking, "Promethee II")
 
 
 if __name__ == "__main__":
     promethee()
+    # dataset = load_dataset(Path('data/lecture'))
+    # preference_information = load_preference_information(Path('data/lecture'))
+    # print(data.iloc[:,1])
+    # diff = np.array([1, -200])
+    # q = np.array([0.0, 100])
+    # p = np.array([2, 300])
+    # print(calculate_marginal_preference_index(diff, q, p))
+    # t = np.array([[[1,2],[2,3]],[[1,2],[1,2]]])
+    # print(t)
+    # i = 0
+    # j = 1
+    # type_of_preference = preference_information['type']
+    # diff = np.where(type_of_preference == 'gain', dataset.iloc[i] - dataset.iloc[j], dataset.iloc[j] - dataset.iloc[i])
+
+    # t = calculate_marginal_preference_index(diff, preference_information.iloc[:, 1], preference_information.iloc[:, 2])
+
+    # print(t)
