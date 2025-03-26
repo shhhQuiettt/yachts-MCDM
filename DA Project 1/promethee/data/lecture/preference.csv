@@ -1,4 +1,5 @@
 Criterion,q,p,k,type
-G1,0,0,3,gain
-G2,0,2,2,gain
-G3,100,300,5,cost
+G1,0,5,0.09,gain
+G2,1,1,0.29,gain
+G3,6,23,0.25,gain
+G4,2,4,0.37,cost

@@ -4,6 +4,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+import matplotlib
+matplotlib.use('TkAgg')  # Use an interactive backend like TkAgg
 from matplotlib import pyplot as plt
 import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout

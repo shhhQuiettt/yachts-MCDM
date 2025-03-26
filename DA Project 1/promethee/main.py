@@ -12,7 +12,6 @@ from utils import (
 )
 
 
-# TODO
 def calculate_marginal_preference_index[T: (float, np.ndarray), U: (float, np.ndarray)](
     diff: T, q: U, p: U
 ) -> T:
@@ -32,7 +31,6 @@ def calculate_marginal_preference_index[T: (float, np.ndarray), U: (float, np.nd
     
 
 
-# TODO
 def calculate_marginal_preference_matrix(
     dataset: pd.DataFrame, preference_information: pd.DataFrame
 ) -> np.ndarray:
@@ -58,7 +56,6 @@ def calculate_marginal_preference_matrix(
     return marginal_preference_matrix
 
 
-# TODO
 def calculate_comprehensive_preference_index(
     marginal_preference_matrix: np.ndarray, preference_information: pd.DataFrame
 ) -> np.ndarray:
@@ -69,10 +66,19 @@ def calculate_comprehensive_preference_index(
     :param preference_information: Padnas preference information dataframe
     :return: 2D numpy array with marginal preference matrix. Every entry in the matrix [i, j] represents comprehensive preference index between alternative i and alternative j
     """
-    raise NotImplementedError()
+    
+    number_of_alternative = marginal_preference_matrix.shape[0]
+    
+    comprehensive_preference_matrix = np.zeros((number_of_alternative, number_of_alternative))
+    
+    sum_of_weights = np.sum(preference_information.iloc[:, 2])
+    for i in range(number_of_alternative):
+        for j in range(number_of_alternative):
+            comprehensive_preference_matrix[i, j] = np.sum(preference_information.iloc[:, 2] * marginal_preference_matrix[i, j]) / sum_of_weights
+    
+    return comprehensive_preference_matrix
 
 
-# TODO
 def calculate_positive_flow(
     comprehensive_preference_matrix: np.ndarray, index: pd.Index
 ) -> pd.Series:
@@ -83,10 +89,11 @@ def calculate_positive_flow(
     :param index: index representing the alternative in the corresponding position in preference matrix
     :return: series representing positive flow values for the given preference matrix
     """
-    raise NotImplementedError()
+    
+    positive_flow = pd.Series(np.sum(comprehensive_preference_matrix, axis=1), index=index)
+    
+    return positive_flow
 
-
-# TODO
 def calculate_negative_flow(
     comprehensive_preference_matrix: np.ndarray, index: pd.Index
 ) -> pd.Series:
@@ -97,10 +104,12 @@ def calculate_negative_flow(
     :param index: index representing the alternative in the corresponding position in preference matrix
     :return: series representing negative flow values for the given preference matrix
     """
-    raise NotImplementedError()
+    
+    negative_flow = pd.Series(np.sum(comprehensive_preference_matrix, axis=0), index=index)
+    
+    return negative_flow
 
 
-# TODO
 def calculate_net_flow(positive_flow: pd.Series, negative_flow: pd.Series) -> pd.Series:
     """
     Function that calculates the net flow value for the given positive and negative flow
@@ -109,10 +118,12 @@ def calculate_net_flow(positive_flow: pd.Series, negative_flow: pd.Series) -> pd
     :param negative_flow: series representing negative flow values for the given preference matrix
     :return: series representing net flow values for the given preference matrix
     """
-    raise NotImplementedError()
+    
+    net_flow = positive_flow - negative_flow
+    
+    return net_flow
 
 
-# TODO
 def create_partial_ranking(
     positive_flow: pd.Series, negative_flow: pd.Series
 ) -> set[tuple[str, str, Relation]]:
@@ -123,10 +134,48 @@ def create_partial_ranking(
     :param negative_flow: series representing negative flow values for the given preference matrix
     :return: list of tuples when entries in a tuple represent first alternative, second alternative and the relation between them respectively
     """
-    raise NotImplementedError()
+    
+    partial_ranking = set()
+
+    number_of_alternative = positive_flow.shape[0]
+
+    for i in range(number_of_alternative):
+        for j in range(i + 1, number_of_alternative):
+
+            # INDIFFERENT
+            # [if positive_flow.iloc[i] == positive_flow.iloc[j] and negative_flow.iloc[i] == negative_flow.iloc[j]]
+
+            if positive_flow.iloc[i] == positive_flow.iloc[j] and negative_flow.iloc[i] == negative_flow.iloc[j]:
+                partial_ranking.add((positive_flow.index.tolist()[i], positive_flow.index.tolist()[j], Relation.INDIFFERENT))
+
+            # INCOMPARABLE
+            # [if positive_flow.iloc[i] > positive_flow.iloc[j] and negative_flow.iloc[i] > negative_flow.iloc[j]] or
+            # [if positive_flow.iloc[i] < positive_flow.iloc[j] and negative_flow.iloc[i] < negative_flow.iloc[j]]
+
+            elif positive_flow.iloc[i] > positive_flow.iloc[j] and negative_flow.iloc[i] > negative_flow.iloc[j]:
+                partial_ranking.add((positive_flow.index.tolist()[i], positive_flow.index.tolist()[j], Relation.INCOMPARABLE))
+
+            elif positive_flow.iloc[i] < positive_flow.iloc[j] and negative_flow.iloc[i] < negative_flow.iloc[j]:
+                partial_ranking.add((positive_flow.index.tolist()[i], positive_flow.index.tolist()[j], Relation.INCOMPARABLE))
+
+            # PREFERRED 
+            # [if positive_flow.iloc[i] > positive_flow.iloc[j] and negative_flow.iloc[i] < negative_flow.iloc[j]] or
+            # [if positive_flow.iloc[i] > positive_flow.iloc[j] and negative_flow.iloc[i] == negative_flow.iloc[j]] or
+            # [if positive_flow.iloc[i] == positive_flow.iloc[j] and negative_flow.iloc[i] < negative_flow.iloc[j]]
+
+            elif positive_flow.iloc[i] > positive_flow.iloc[j] and negative_flow.iloc[i] < negative_flow.iloc[j]:
+                partial_ranking.add((positive_flow.index.tolist()[i], positive_flow.index.tolist()[j], Relation.PREFERRED))
+            elif positive_flow.iloc[i] > positive_flow.iloc[j] and negative_flow.iloc[i] == negative_flow.iloc[j]:
+                partial_ranking.add((positive_flow.index.tolist()[i], positive_flow.index.tolist()[j], Relation.PREFERRED))
+            elif positive_flow.iloc[i] == positive_flow.iloc[j] and negative_flow.iloc[i] < negative_flow.iloc[j]:
+                partial_ranking.add((positive_flow.index.tolist()[i], positive_flow.index.tolist()[j], Relation.PREFERRED))
+            else:
+                # j is preferred over i
+                partial_ranking.add((positive_flow.index.tolist()[j], positive_flow.index.tolist()[i], Relation.PREFERRED))
+
+    return partial_ranking
 
 
-# TODO
 def create_complete_ranking(net_flow: pd.Series) -> set[tuple[str, str, Relation]]:
     """
     Function that aggregates positive and negative flow to a complete ranking (from Promethee II)
@@ -135,7 +184,24 @@ def create_complete_ranking(net_flow: pd.Series) -> set[tuple[str, str, Relation
     1 means that i is preferred over j, or they are indifferent
     0 otherwise
     """
-    raise NotImplementedError()
+    
+    complete_ranking = set()
+
+    number_of_alternative = net_flow.shape[0]
+
+    for i in range(number_of_alternative):
+        for j in range(i + 1, number_of_alternative):
+
+            if net_flow.iloc[i] > net_flow.iloc[j]:
+                complete_ranking.add((net_flow.index.tolist()[i], net_flow.index.tolist()[j], Relation.PREFERRED))
+            elif net_flow.iloc[i] < net_flow.iloc[j]:
+                complete_ranking.add((net_flow.index.tolist()[j], net_flow.index.tolist()[i], Relation.PREFERRED))
+            elif net_flow.iloc[i] == net_flow.iloc[j]:
+                complete_ranking.add((net_flow.index.tolist()[i], net_flow.index.tolist()[j], Relation.INDIFFERENT))
+            else:
+                complete_ranking.add((net_flow.index.tolist()[i], net_flow.index.tolist()[j], Relation.INCOMPARABLE))
+
+    return complete_ranking
 
 
 @click.command()
@@ -144,53 +210,35 @@ def promethee(dataset_path: str) -> None:
     dataset_path = Path(dataset_path)
 
     dataset = load_dataset(dataset_path)
-    # print(dataset.head())
+
     preference_information = load_preference_information(dataset_path)
 
-    # print(preference_information.head())
+
     marginal_preference_matrix = calculate_marginal_preference_matrix(
         dataset, preference_information
     )
-    print(marginal_preference_matrix)
-    # print(marginal_preference_matrix)
-    # print(marginal_preference_matrix)
-    # comprehensive_preference_matrix = calculate_comprehensive_preference_index(
-    #     marginal_preference_matrix, preference_information
-    # )
 
-    # positive_flow = calculate_positive_flow(
-    #     comprehensive_preference_matrix, dataset.index
-    # )
-    # negative_flow = calculate_negative_flow(
-    #     comprehensive_preference_matrix, dataset.index
-    # )
+    comprehensive_preference_matrix = calculate_comprehensive_preference_index(
+        marginal_preference_matrix, preference_information
+    )
 
-    # assert positive_flow.index.equals(negative_flow.index)
 
-    # partial_ranking = create_partial_ranking(positive_flow, negative_flow)
-    # display_ranking(partial_ranking, "Promethee I")
+    positive_flow = calculate_positive_flow(
+        comprehensive_preference_matrix, dataset.index
+    )
 
-    # net_flow = calculate_net_flow(positive_flow, negative_flow)
-    # complete_ranking = create_complete_ranking(net_flow)
-    # display_ranking(complete_ranking, "Promethee II")
+    negative_flow = calculate_negative_flow(
+        comprehensive_preference_matrix, dataset.index
+    )
+
+    assert positive_flow.index.equals(negative_flow.index)
+
+    partial_ranking = create_partial_ranking(positive_flow, negative_flow)
+    display_ranking(partial_ranking, "Promethee I")
+    net_flow = calculate_net_flow(positive_flow, negative_flow)
+    complete_ranking = create_complete_ranking(net_flow)
+    display_ranking(complete_ranking, "Promethee II")
 
 
 if __name__ == "__main__":
     promethee()
-    # dataset = load_dataset(Path('data/lecture'))
-    # preference_information = load_preference_information(Path('data/lecture'))
-    # print(data.iloc[:,1])
-    # diff = np.array([1, -200])
-    # q = np.array([0.0, 100])
-    # p = np.array([2, 300])
-    # print(calculate_marginal_preference_index(diff, q, p))
-    # t = np.array([[[1,2],[2,3]],[[1,2],[1,2]]])
-    # print(t)
-    # i = 0
-    # j = 1
-    # type_of_preference = preference_information['type']
-    # diff = np.where(type_of_preference == 'gain', dataset.iloc[i] - dataset.iloc[j], dataset.iloc[j] - dataset.iloc[i])
-
-    # t = calculate_marginal_preference_index(diff, preference_information.iloc[:, 1], preference_information.iloc[:, 2])
-
-    # print(t)
