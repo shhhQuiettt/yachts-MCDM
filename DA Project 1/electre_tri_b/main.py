@@ -79,31 +79,48 @@ def calculate_marginal_concordance_matrix(
             ]
             preference_threshold = preference_thresholds.at[boundary_id, criterion_id]
 
-            marginal_concordance_index_alt_to_bound = calculate_marginal_concordance_index(
-                diff,
-                q=indifference_threshold,
-                p=preference_threshold,
+            marginal_concordance_index_alt_to_bound = (
+                calculate_marginal_concordance_index(
+                    diff,
+                    q=indifference_threshold,
+                    p=preference_threshold,
+                )
             )
 
-            marginal_concordance_index_bound_to_alt =  calculate_marginal_concordance_index(
-                -diff,
-                q=indifference_threshold,
-                p=preference_threshold,
+            marginal_concordance_index_bound_to_alt = (
+                calculate_marginal_concordance_index(
+                    -diff,
+                    q=indifference_threshold,
+                    p=preference_threshold,
+                )
             )
 
             criterion_concordances.append(
-                    np.vstack((marginal_concordance_index_alt_to_bound, marginal_concordance_index_bound_to_alt)),
-                               )
+                np.vstack(
+                    (
+                        marginal_concordance_index_alt_to_bound,
+                        marginal_concordance_index_bound_to_alt,
+                    )
+                ),
+            )
             # print(criterion_concordances[-1].shape)
         # print(np.dstack(criterion_concordances).shape)
         concordances.append(np.dstack(criterion_concordances))
-        assert concordances[-1].shape == (2, len(dataset.index), len(boundary_profiles.index)), f"Expected: {(2, len(dataset.index), len(boundary_profiles.index))} Got: {concordances[-1].shape}"
+        assert concordances[-1].shape == (
+            2,
+            len(dataset.index),
+            len(boundary_profiles.index),
+        ), f"Expected: {(2, len(dataset.index), len(boundary_profiles.index))} Got: {concordances[-1].shape}"
 
-    concordances_numpy = np.stack(concordances, axis = 3)
-    assert concordances_numpy.shape == (2, len(dataset.index), len(boundary_profiles.index), len(dataset.columns)), f"Expected: {(2, len(dataset.index), len(boundary_profiles.index, len(dataset.columns)))} Got: {concordances_numpy.shape}"
+    concordances_numpy = np.stack(concordances, axis=3)
+    assert concordances_numpy.shape == (
+        2,
+        len(dataset.index),
+        len(boundary_profiles.index),
+        len(dataset.columns),
+    ), f"Expected: {(2, len(dataset.index), len(boundary_profiles.index, len(dataset.columns)))} Got: {concordances_numpy.shape}"
 
     return concordances_numpy
-
 
 
 def calculate_comprehensive_concordance_matrix(
@@ -117,9 +134,10 @@ def calculate_comprehensive_concordance_matrix(
     :return: 3D numpy array with comprehensive concordance matrix with shape [2, number of alternatives, number of boundary profiles], where element with index [0, i, j] describe comprehensive concordance index between alternative i and boundary profile j, while element with index [1, i, j] describe comprehensive concordance index between boundary profile j and  alternative i
     """
     weights = criterion_types.loc[:, "k"].to_numpy()
-    comprehensive_concordance_matrix = np.average(marginal_concordance_matrix, axis = 3, weights = weights)
+    comprehensive_concordance_matrix = np.average(
+        marginal_concordance_matrix, axis=3, weights=weights
+    )
     return comprehensive_concordance_matrix
-
 
 
 # TODO
@@ -137,10 +155,10 @@ def calculate_marginal_discordance_index[T: (
     """
 
     discordance = np.clip(
-            (-diff - p) / (v-p),
-            0,
-            1,
-            )
+        (-diff - p) / (v - p),
+        0,
+        1,
+    )
 
     return discordance
 
@@ -169,9 +187,7 @@ def calculate_marginal_discordance_matrix(
         for boundary_id in boundary_profiles.index:
             veto_threshold = veto_thresholds.at[boundary_id, criterion_id]
             if np.isnan(veto_threshold):
-                criterion_discordances.append(
-                        np.zeros((2, len(dataset.index)))
-                    )
+                criterion_discordances.append(np.zeros((2, len(dataset.index))))
                 continue
 
             preference_threshold = preference_thresholds.at[boundary_id, criterion_id]
@@ -188,33 +204,44 @@ def calculate_marginal_discordance_matrix(
                 else boundary_profile_value - criterion_values
             )
 
-
-            marginal_discordance_index_alt_to_bound = calculate_marginal_discordance_index(
-                diff,
-                p=preference_threshold,
-                v=veto_threshold
+            marginal_discordance_index_alt_to_bound = (
+                calculate_marginal_discordance_index(
+                    diff, p=preference_threshold, v=veto_threshold
+                )
             )
 
-            marginal_discordance_index_bound_to_alt =  calculate_marginal_discordance_index(
-                -diff,
-                p=preference_threshold,
-                v=veto_threshold
+            marginal_discordance_index_bound_to_alt = (
+                calculate_marginal_discordance_index(
+                    -diff, p=preference_threshold, v=veto_threshold
+                )
             )
 
             criterion_discordances.append(
-                    np.vstack((marginal_discordance_index_alt_to_bound, marginal_discordance_index_bound_to_alt)),
-                               )
+                np.vstack(
+                    (
+                        marginal_discordance_index_alt_to_bound,
+                        marginal_discordance_index_bound_to_alt,
+                    )
+                ),
+            )
         discordances.append(np.dstack(criterion_discordances))
-        assert discordances[-1].shape == (2, len(dataset.index), len(boundary_profiles.index)), f"Expected: {(2, len(dataset.index), len(boundary_profiles.index))} Got: {discordances[-1].shape}"
+        assert discordances[-1].shape == (
+            2,
+            len(dataset.index),
+            len(boundary_profiles.index),
+        ), f"Expected: {(2, len(dataset.index), len(boundary_profiles.index))} Got: {discordances[-1].shape}"
 
-    discordances_numpy = np.stack(discordances, axis = 3)
-    assert discordances_numpy.shape == (2, len(dataset.index), len(boundary_profiles.index), len(dataset.columns)), f"Expected: {(2, len(dataset.index), len(boundary_profiles.index, len(dataset.columns)))} Got: {discordances_numpy.shape}"
+    discordances_numpy = np.stack(discordances, axis=3)
+    assert discordances_numpy.shape == (
+        2,
+        len(dataset.index),
+        len(boundary_profiles.index),
+        len(dataset.columns),
+    ), f"Expected: {(2, len(dataset.index), len(boundary_profiles.index, len(dataset.columns)))} Got: {discordances_numpy.shape}"
 
-    print(discordances_numpy[1,:,0,:])
+    print(discordances_numpy[1, :, 0, :])
 
     return discordances_numpy
-
-
 
 
 # TODO
@@ -223,20 +250,36 @@ def calculate_credibility_index(
     marginal_discordance_matrix: np.ndarray,
 ) -> np.ndarray:
     """
-    Function that calculates the credibility index for the given comprehensive concordance matrix and marginal discordance matrix
-
-    :param comprehensive_concordance_matrix: 3D numpy array with comprehensive concordance matrix. Every entry in the matrix [i, j] represents comprehensive concordance index between alternative i and alternative j
-    :param marginal_discordance_matrix: 3D numpy array with marginal discordance matrix, Consecutive indices [i, j, k] describe first alternative, second alternative, criterion
-    :return: 3D numpy array with credibility matrix with shape [2, number of alternatives, number of boundary profiles], where element with index [0, i, j] describe credibility index between alternative i and boundary profile j, while element with index [1, i, j] describe credibility index between boundary profile j and  alternative i
+        Function that calculates the credibility index for the given comprehensive concordance matrix and marginal discordance matrix
+    c
+        :param comprehensive_concordance_matrix: 3D numpy array with comprehensive concordance matrix. Every entry in the matrix [i, j] represents comprehensive concordance index between alternative i and alternative j
+        :param marginal_discordance_matrix: 3D numpy array with marginal discordance matrix, Consecutive indices [i, j, k] describe first alternative, second alternative, criterion
+        :return: 3D numpy array with credibility matrix with shape [2, number of alternatives, number of boundary profiles], where element with index [0, i, j] describe credibility index between alternative i and boundary profile j, while element with index [1, i, j] describe credibility index between boundary profile j and  alternative i
     """
     credibility_index = comprehensive_concordance_matrix.copy()
-
     criterion_number = marginal_discordance_matrix.shape[-1]
-    sufficienly_great_discordance_mask = marginal_discordance_matrix > as_strided(credibility_index, shape = credibility_index.shape + (criterion_number,),
-                                                                                  strides = credibility_index.strides + (0,))
 
-        
+    comprehensive_concordance_matrix = as_strided(
+        credibility_index,
+        shape=credibility_index.shape + (criterion_number,),
+        strides=credibility_index.strides + (0,),
+    )
 
+    sufficienly_great_discordance_mask = (
+        marginal_discordance_matrix > comprehensive_concordance_matrix
+    )
+
+    fraction = np.where(
+        sufficienly_great_discordance_mask,
+        (1 - marginal_discordance_matrix) / (1 - (comprehensive_concordance_matrix)),
+        1,
+    )
+
+    fraction = np.prod(fraction, axis=3)
+
+    credibility_index *= fraction
+
+    return credibility_index
 
 
 # TODO
@@ -328,6 +371,7 @@ def electre(dataset_path: Path) -> None:
     credibility_index = calculate_credibility_index(
         comprehensive_concordance_matrix, marginal_discordance_matrix
     )
+
     # outranking_relation_matrix = calculate_outranking_relation_matrix(
     #     credibility_index, credibility_threshold
     # )
