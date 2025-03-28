@@ -5,7 +5,7 @@ import numpy as np
 from numpy.lib.stride_tricks import as_strided
 import pandas as pd
 
-from utils import (
+from electre_tri_b.utils import (
     load_dataset,
     load_boundary_profiles,
     load_indifference_thresholds,
@@ -16,7 +16,6 @@ from utils import (
 )
 
 
-# TODO
 def calculate_marginal_concordance_index[T: (
     float,
     np.ndarray,
@@ -39,7 +38,6 @@ def calculate_marginal_concordance_index[T: (
     return concordance
 
 
-# TODO
 def calculate_marginal_concordance_matrix(
     dataset: pd.DataFrame,
     boundary_profiles: pd.DataFrame,
@@ -138,7 +136,6 @@ def calculate_comprehensive_concordance_matrix(
     return comprehensive_concordance_matrix
 
 
-# TODO
 def calculate_marginal_discordance_index[T: (
     float,
     np.ndarray,
@@ -161,7 +158,6 @@ def calculate_marginal_discordance_index[T: (
     return discordance
 
 
-# TODO
 def calculate_marginal_discordance_matrix(
     dataset: pd.DataFrame,
     boundary_profiles: pd.DataFrame,
@@ -240,7 +236,6 @@ def calculate_marginal_discordance_matrix(
     return discordances_numpy
 
 
-# TODO
 def calculate_credibility_index(
     comprehensive_concordance_matrix: np.ndarray,
     marginal_discordance_matrix: np.ndarray,
@@ -278,7 +273,6 @@ def calculate_credibility_index(
     return credibility_index
 
 
-# TODO
 def calculate_outranking_relation_matrix(
     credibility_index: np.ndarray, credibility_threshold: float
 ) -> np.ndarray:
@@ -292,7 +286,6 @@ def calculate_outranking_relation_matrix(
     return credibility_index >= credibility_threshold
 
 
-# TODO
 def calculate_relation(
     outranking_relation_matrix: np.ndarray,
     alternatives: pd.Index,
@@ -337,7 +330,6 @@ def calculate_relation(
     return relation
 
 
-# TODO
 def calculate_pessimistic_assigment(relation: pd.DataFrame) -> pd.DataFrame:
     """
     Function that calculates pessimistic assigment for given relation between alternatives and boundary profiles
@@ -346,12 +338,11 @@ def calculate_pessimistic_assigment(relation: pd.DataFrame) -> pd.DataFrame:
     :return: dataframe with pessimistic assigment
     """
     class_assignment = pd.DataFrame(index=relation.index, columns=["class"])
-    print(class_assignment)
 
     for alternative in relation.index:
         class_id = len(relation.columns) + 1
         for boundary in relation.columns[::-1]:
-            if relation.at[alternative, boundary] == ">":
+            if relation.at[alternative, boundary] in (">", "I"):
                 class_assignment.at[alternative, "class"] = f"C{class_id}"
                 break
             class_id -= 1
@@ -359,10 +350,9 @@ def calculate_pessimistic_assigment(relation: pd.DataFrame) -> pd.DataFrame:
             if class_id == 1:
                 class_assignment.at[alternative, "class"] = f"C{class_id}"
 
-    print(class_assignment)
+    return class_assignment
 
 
-# TODO
 def calculate_optimistic_assigment(relation: pd.DataFrame) -> pd.DataFrame:
     """
     Function that calculates optimistic assigment for given relation between alternatives and boundary profiles
@@ -370,7 +360,20 @@ def calculate_optimistic_assigment(relation: pd.DataFrame) -> pd.DataFrame:
     :param relation: pandas dataframe with relation between alternatives as rows and boundary profiles as columns. With "<" or ">" for preference, "I" for indifference and "?" for incompatibility
     :return: dataframe with optimistic assigment
     """
-    raise NotImplementedError()
+    class_assignment = pd.DataFrame(index=relation.index, columns=["class"])
+
+    for alternative in relation.index:
+        class_id = 1
+        for boundary in relation.columns:
+            if relation.at[alternative, boundary] == "<":
+                class_assignment.at[alternative, "class"] = f"C{class_id}"
+                break
+            class_id += 1
+
+            if class_id == 3:
+                class_assignment.at[alternative, "class"] = f"C{class_id}"
+
+    return class_assignment
 
 
 @click.command()
@@ -419,10 +422,10 @@ def electre(dataset_path: Path) -> None:
     )
 
     pessimistic_assigment = calculate_pessimistic_assigment(relation)
-    # optimistic_assigment = calculate_optimistic_assigment(relation)
+    optimistic_assigment = calculate_optimistic_assigment(relation)
 
-    # print("pessimistic assigment\n", pessimistic_assigment)
-    # print("optimistic assigment\n", optimistic_assigment)
+    print("pessimistic assigment\n", pessimistic_assigment)
+    print("optimistic assigment\n", optimistic_assigment)
 
 
 if __name__ == "__main__":
