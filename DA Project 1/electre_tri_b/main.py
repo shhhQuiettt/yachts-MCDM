@@ -103,8 +103,6 @@ def calculate_marginal_concordance_matrix(
                     )
                 ),
             )
-            # print(criterion_concordances[-1].shape)
-        # print(np.dstack(criterion_concordances).shape)
         concordances.append(np.dstack(criterion_concordances))
         assert concordances[-1].shape == (
             2,
@@ -239,8 +237,6 @@ def calculate_marginal_discordance_matrix(
         len(dataset.columns),
     ), f"Expected: {(2, len(dataset.index), len(boundary_profiles.index, len(dataset.columns)))} Got: {discordances_numpy.shape}"
 
-    print(discordances_numpy[1, :, 0, :])
-
     return discordances_numpy
 
 
@@ -284,7 +280,7 @@ def calculate_credibility_index(
 
 # TODO
 def calculate_outranking_relation_matrix(
-    credibility_index: np.ndarray, credibility_threshold
+    credibility_index: np.ndarray, credibility_threshold: float
 ) -> np.ndarray:
     """
     Function that calculates boolean matrix with information if outranking holds for a given pair
@@ -293,7 +289,7 @@ def calculate_outranking_relation_matrix(
     :param credibility_threshold: float number
     :return: 3D numpy boolean matrix with information if outranking holds for a given pair
     """
-    raise NotImplementedError()
+    return credibility_index >= credibility_threshold
 
 
 # TODO
@@ -310,7 +306,35 @@ def calculate_relation(
     :param boundary_profiles_names: names of boundary profiles
     :return: pandas dataframe with relation between alternatives as rows and boundary profiles as columns. Use "<" or ">" for preference, "I" for indifference and "?" for incompatibility
     """
-    raise NotImplementedError()
+
+    relation_raw = np.empty(
+        (len(alternatives), len(boundary_profiles_names)), dtype="S1"
+    )
+
+    relation_raw[
+        outranking_relation_matrix[0, :, :] & outranking_relation_matrix[1, :, :]
+    ] = "I"
+
+    relation_raw[
+        outranking_relation_matrix[0, :, :] & ~outranking_relation_matrix[1, :, :]
+    ] = ">"
+
+    relation_raw[
+        ~outranking_relation_matrix[0, :, :] & outranking_relation_matrix[1, :, :]
+    ] = "<"
+
+    relation_raw[
+        ~outranking_relation_matrix[0, :, :] & ~outranking_relation_matrix[1, :, :]
+    ] = "?"
+
+    relation = pd.DataFrame(
+        data=relation_raw,
+        index=alternatives,
+        columns=boundary_profiles_names,
+        dtype=pd.StringDtype(),
+    )
+
+    return relation
 
 
 # TODO
@@ -321,7 +345,21 @@ def calculate_pessimistic_assigment(relation: pd.DataFrame) -> pd.DataFrame:
     :param relation: pandas dataframe with relation between alternatives as rows and boundary profiles as columns. With "<" or ">" for preference, "I" for indifference and "?" for incompatibility
     :return: dataframe with pessimistic assigment
     """
-    raise NotImplementedError()
+    class_assignment = pd.DataFrame(index=relation.index, columns=["class"])
+    print(class_assignment)
+
+    for alternative in relation.index:
+        class_id = len(relation.columns) + 1
+        for boundary in relation.columns[::-1]:
+            if relation.at[alternative, boundary] == ">":
+                class_assignment.at[alternative, "class"] = f"C{class_id}"
+                break
+            class_id -= 1
+
+            if class_id == 1:
+                class_assignment.at[alternative, "class"] = f"C{class_id}"
+
+    print(class_assignment)
 
 
 # TODO
@@ -372,14 +410,15 @@ def electre(dataset_path: Path) -> None:
         comprehensive_concordance_matrix, marginal_discordance_matrix
     )
 
-    # outranking_relation_matrix = calculate_outranking_relation_matrix(
-    #     credibility_index, credibility_threshold
-    # )
-    # relation = calculate_relation(
-    #     outranking_relation_matrix, dataset.index, boundary_profiles.index
-    # )
+    outranking_relation_matrix = calculate_outranking_relation_matrix(
+        credibility_index, credibility_threshold
+    )
 
-    # pessimistic_assigment = calculate_pessimistic_assigment(relation)
+    relation = calculate_relation(
+        outranking_relation_matrix, dataset.index, boundary_profiles.index
+    )
+
+    pessimistic_assigment = calculate_pessimistic_assigment(relation)
     # optimistic_assigment = calculate_optimistic_assigment(relation)
 
     # print("pessimistic assigment\n", pessimistic_assigment)
