@@ -1,9 +1,12 @@
 from pathlib import Path
+import matplotlib.pyplot as plt
 
 import click
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
 import pandas as pd
+from pandas.plotting import table
+
 
 from electre_tri_b.utils import (
     load_dataset,
@@ -424,8 +427,33 @@ def electre(dataset_path: Path) -> None:
     pessimistic_assigment = calculate_pessimistic_assigment(relation)
     optimistic_assigment = calculate_optimistic_assigment(relation)
 
-    print("pessimistic assigment\n", pessimistic_assigment)
-    print("optimistic assigment\n", optimistic_assigment)
+    # map C1->bad, C2->average, C3->good
+
+    class_mapping = {
+        "C1": "bad",
+        "C2": "average",
+        "C3": "good",
+    }
+    pessimistic_assigment["class"] = pessimistic_assigment["class"].map(class_mapping)
+    optimistic_assigment["class"] = optimistic_assigment["class"].map(class_mapping)
+
+    fig, ax = plt.subplots(figsize=(5, 5))
+    ax.axis("off")
+    tbl = table(
+        ax, pessimistic_assigment, loc="center", cellLoc="center", colWidths=[0.2, 0.2]
+    )
+    tbl.scale(1.5, 1.5)
+
+    plt.show()
+
+    fig, ax = plt.subplots(figsize=(5, 5))
+    ax.axis("off")
+    tbl = table(
+        ax, optimistic_assigment, loc="center", cellLoc="center", colWidths=[0.2, 0.2]
+    )
+    tbl.scale(1.5, 1.5)
+
+    plt.show()
 
 
 if __name__ == "__main__":
