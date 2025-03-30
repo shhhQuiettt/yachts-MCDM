@@ -1,0 +1,6 @@
+Criterion,k,type
+PricePerDay,4,cost
+Deposit,1,cost
+EnginePower,2,gain
+SailArea,2,gain
+Width,1,gain

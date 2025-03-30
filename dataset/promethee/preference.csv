@@ -1,0 +1,6 @@
+Critertion,q,p,k,type
+PricePerDay,15,40,4,cost
+Deposit,100,300,1,cost
+EnginePower,0,2,2,gain
+SailArea,1,3,2,gain
+Width,15,45,1,gain
