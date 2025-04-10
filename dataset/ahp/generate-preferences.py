@@ -1,9 +1,10 @@
 import pandas as pd
+from typing import Literal
 import numpy as np
 import random
 from itertools import combinations
 
-def generate_preferences(data, parent: str) -> pd.DataFrame:
+def generate_preferences(data, parent: str, criterion_type: Literal["Cost", "Gain"]) -> pd.DataFrame:
     col = data[parent].unique().tolist()
     minim = np.min(col)
     maxim = np.max(col)
@@ -14,6 +15,10 @@ def generate_preferences(data, parent: str) -> pd.DataFrame:
         comp = (el1-el2) / (maxim-minim) + random.uniform(-0.2, 0.2)
         preference = 1 + 8 * comp
         preference = max(1, min(int(preference), 9))
+
+
+        if criterion_type=="Cost":
+            el1, el2 = el2, el1
 
         new_col[(el1, el2)] = preference
 
@@ -28,17 +33,17 @@ def generate_preferences(data, parent: str) -> pd.DataFrame:
 if __name__ == "__main__":
     data = pd.read_csv("./dataset.csv", index_col=0)
 
-    preferences = pd.DataFrame(columns=["parent", "Element1", "Element2", "Judgment"])
+    preferences = pd.DataFrame(columns=["parent", "Element1", "Element2", "Judgement"])
 
-    ppd = generate_preferences(data, "PricePerDay")
+    ppd = generate_preferences(data, "PricePerDay", "Cost")
 
-    dp = generate_preferences(data, "Deposit")
+    dp = generate_preferences(data, "Deposit", "Cost")
 
-    ep = generate_preferences(data, "EnginePower")
+    ep = generate_preferences(data, "EnginePower", "Gain")
 
-    sa = generate_preferences(data, "SailArea")
+    sa = generate_preferences(data, "SailArea", "Gain")
 
-    wi = generate_preferences(data, "Width")
+    wi = generate_preferences(data, "Width", "Gain")
 
 
     preferences = pd.concat([preferences, ppd, dp, ep, sa, wi], ignore_index=True)

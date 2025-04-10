@@ -1,6 +1,6 @@
-DecisionMaker,CriterionType,CriterionName,Preference
-PricePerDay,
-Deposit,
-EnginePower,
-SailArea,
-Width
+CriterionName,CriterionType
+PricePerDay,Money
+Deposit,Money
+EnginePower,Technical
+SailArea,Technical
+Width,Technical
