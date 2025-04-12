@@ -1,0 +1,5 @@
+parent,Element1,Element2,Judgement
+Money,PricePerDay,Deposit,8
+Technical,SailArea,EnginePower,4
+Technical,SailArea,Width,9
+Technical,EnginePower,Width,6

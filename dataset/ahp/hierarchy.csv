@@ -1,0 +1,6 @@
+CriterionName,CriterionType
+PricePerDay,Money
+Deposit,Money
+EnginePower,Technical
+SailArea,Technical
+Width,Technical
