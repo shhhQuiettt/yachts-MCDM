@@ -57,7 +57,7 @@ def get_relative_consistency_index(comparison_matrix: npt.NDArray) -> float:
 
 
 
-def recreate_consistent_matrix(priorities: npt.NDArray) -> npt.NDArray:
+def recreate_consitant_matrix(priorities: npt.NDArray) -> npt.NDArray:
     return np.outer(priorities, 1/priorities)
 
 if __name__ == "__main__":
